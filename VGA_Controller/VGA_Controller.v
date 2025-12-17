@@ -101,19 +101,24 @@ wire	[12:0]		v_mask;
 
 assign v_mask = 13'd0;
 
+localparam [12:0] DISPLAY_W   = 13'd200;
+localparam [12:0] DISPLAY_H   = 13'd150;
+localparam [12:0] DISPLAY_X_S = X_START + H_SYNC_ACT - DISPLAY_W;
+localparam [12:0] DISPLAY_Y_S = Y_START + V_SYNC_ACT - DISPLAY_H;
+
 ////////////////////////////////////////////////////////
 
 assign	mVGA_BLANK	=	mVGA_H_SYNC & mVGA_V_SYNC;
 assign	mVGA_SYNC	=	1'b0;
 
-assign	mVGA_R	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
-						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
+assign	mVGA_R	=	(	H_Cont>=DISPLAY_X_S	&& H_Cont<DISPLAY_X_S+DISPLAY_W &&
+						V_Cont>=DISPLAY_Y_S+v_mask && V_Cont<DISPLAY_Y_S+DISPLAY_H )
 						?	iRed	:	0;
-assign	mVGA_G	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
-						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
+assign	mVGA_G	=	(	H_Cont>=DISPLAY_X_S	&& H_Cont<DISPLAY_X_S+DISPLAY_W &&
+						V_Cont>=DISPLAY_Y_S+v_mask && V_Cont<DISPLAY_Y_S+DISPLAY_H )
 						?	iGreen	:	0;
-assign	mVGA_B	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
-						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
+assign	mVGA_B	=	(	H_Cont>=DISPLAY_X_S	&& H_Cont<DISPLAY_X_S+DISPLAY_W &&
+						V_Cont>=DISPLAY_Y_S+v_mask && V_Cont<DISPLAY_Y_S+DISPLAY_H )
 						?	iBlue	:	0;
 
 always@(posedge iCLK or negedge iRST_N)
@@ -151,8 +156,8 @@ begin
 	oRequest	<=	0;
 	else
 	begin
-		if(	H_Cont>=X_START-SH_L && H_Cont< X_START+H_SYNC_ACT - SH_L &&
-			   V_Cont>=Y_START && V_Cont< Y_START + V_SYNC_ACT )
+		if(	H_Cont>=DISPLAY_X_S-SH_L && H_Cont< DISPLAY_X_S+DISPLAY_W - SH_L &&
+			   V_Cont>=DISPLAY_Y_S && V_Cont< DISPLAY_Y_S + DISPLAY_H )
 		oRequest	<=	1;
 		else
 		oRequest	<=	0;

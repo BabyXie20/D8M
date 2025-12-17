@@ -22,6 +22,17 @@ module RAW2RGB_J(
   wire [9:0]	mCCD_G; 
   wire [9:0]	mCCD_B;
   reg			   mDVAL;
+  localparam integer SRC_WIDTH   = 640;
+  localparam integer SRC_HEIGHT  = 480;
+  localparam integer DISP_WIDTH  = 200;
+  localparam integer DISP_HEIGHT = 150;
+  localparam integer X_INT_STEP  = SRC_WIDTH  / DISP_WIDTH;
+  localparam integer X_REM_STEP  = SRC_WIDTH  % DISP_WIDTH;
+  localparam integer Y_INT_STEP  = SRC_HEIGHT / DISP_HEIGHT;
+  localparam integer Y_REM_STEP  = SRC_HEIGHT % DISP_HEIGHT;
+  
+  reg    [8:0]  x_remain;
+  reg    [8:0]  y_remain;
   
   //--------
   reg	 [10:0]	mX_Cont;
@@ -38,17 +49,38 @@ assign	oBlue	 =  (mY_Cont > 1)? mCCD_B[9:2]:0;
 
 //-----COUNTER ----
 always @(negedge VGA_VS or posedge VGA_CLK )begin
-  if ( !VGA_VS ) begin 
+  if ( !VGA_VS ) begin
     mX_Cont<=0;
     mY_Cont<=0;
-end 
-else 
-begin 
-  rDVAL <= READ_Request   ; 
-  if ( !rDVAL)    mX_Cont<=0;  else mX_Cont<=mX_Cont+1 ;   
-  if (  rDVAL  && !READ_Request)  mY_Cont <= mY_Cont+1 ; 
-end 
-end 
+    x_remain<=0;
+    y_remain<=0;
+end
+else
+begin
+  rDVAL <= READ_Request   ;
+  if ( !rDVAL)    begin
+    mX_Cont<=0;
+    x_remain<=0;
+  end else if (READ_Request) begin
+    if (x_remain + X_REM_STEP >= DISP_WIDTH) begin
+      mX_Cont <= mX_Cont + X_INT_STEP + 1;
+      x_remain <= x_remain + X_REM_STEP - DISP_WIDTH;
+    end else begin
+      mX_Cont <= mX_Cont + X_INT_STEP;
+      x_remain <= x_remain + X_REM_STEP;
+    end
+  end
+  if (  rDVAL  && !READ_Request)  begin
+    if (y_remain + Y_REM_STEP >= DISP_HEIGHT) begin
+      mY_Cont <= mY_Cont + Y_INT_STEP + 1;
+      y_remain <= y_remain + Y_REM_STEP - DISP_HEIGHT;
+    end else begin
+      mY_Cont <= mY_Cont + Y_INT_STEP;
+      y_remain <= y_remain + Y_REM_STEP;
+    end
+  end
+end
+end
 //--------
 
 //----3 2-PORT-LINE-BUFFER----  
